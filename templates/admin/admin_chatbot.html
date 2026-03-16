@@ -1,0 +1,84 @@
+<!-- Add this to admin panel -->
+<div class="card">
+    <div class="card-header bg-transparent border-0">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-robot me-2"></i>Chatbot Analytics
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card bg-primary text-white">
+                    <h3 class="fw-bold mb-2">{{ total_interactions }}</h3>
+                    <small>Total Interactions</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-success text-white">
+                    <h3 class="fw-bold mb-2">{{ resolved_queries }}</h3>
+                    <small>Resolved Queries</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-info text-white">
+                    <h3 class="fw-bold mb-2">{{ success_rate }}%</h3>
+                    <small>Success Rate</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-warning text-white">
+                    <h3 class="fw-bold mb-2">{{ common_issues }}</h3>
+                    <small>Common Issues</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chatbot Configuration -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Common Questions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for intent, data in chatbot_intents %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ intent|title }}</strong>
+                                        <small class="d-block text-muted">
+                                            {{ data.patterns|join(', ') }}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-primary">{{ data.usage_count }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Chatbot Settings</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="chatbotEnabled" checked>
+                            <label class="form-check-label" for="chatbotEnabled">Enable Chatbot</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="autoGreeting" checked>
+                            <label class="form-check-label" for="autoGreeting">Auto Greeting</label>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="exportChatbotLogs()">
+                            <i class="bi bi-download me-1"></i> Export Logs
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

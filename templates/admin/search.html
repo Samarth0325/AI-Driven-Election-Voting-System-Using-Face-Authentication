@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Voters - SecureVote</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4ade80;
+            --warning-color: #fbbf24;
+            --danger-color: #ef4444;
+            --info-color: #06d6a0;
+            --light-color: #f8fafc;
+            --dark-color: #1e293b;
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fb;
+            color: var(--dark-color);
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            box-shadow: var(--shadow-light);
+        }
+
+        .main-content {
+            background-color: #f5f7fb;
+            min-height: 100vh;
+        }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .search-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-light);
+        }
+
+        .search-input {
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.3rem rgba(67, 97, 238, 0.1);
+        }
+
+        .search-btn {
+            border-radius: 12px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .search-highlight {
+            background-color: #fff3cd;
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.3rem;
+            font-weight: 600;
+        }
+
+        .feature-card {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .result-count {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin: 0 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar px-0">
+                <div class="d-flex flex-column p-3 h-100">
+                    <!-- Brand -->
+                    <div class="text-center mb-4">
+                        <h4 class="text-white fw-bold mb-0">
+                            <i class="bi bi-shield-check me-2"></i>SecureVote
+                        </h4>
+                        <small class="text-white-50">Admin Panel</small>
+                    </div>
+                    
+                    <hr class="bg-white-50 my-3">
+                    
+                    <!-- Navigation -->
+                    <ul class="nav nav-pills flex-column mb-auto">
+                        <li class="nav-item">
+                            <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+                                <i class="bi bi-speedometer2 me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('admin_voters') }}" class="nav-link">
+                                <i class="bi bi-people me-2"></i>
+                                Voter Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('search_voters') }}" class="nav-link active">
+                                <i class="bi bi-search me-2"></i>
+                                Search Voters
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('auth_logs') }}" class="nav-link">
+                                <i class="bi bi-clock-history me-2"></i>
+                                Authentication Logs
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <hr class="bg-white-50 my-3">
+                    
+                    <!-- Export Section -->
+                    <div class="mt-auto">
+                        <div class="bg-white rounded p-3">
+                            <h6 class="fw-bold mb-3 text-dark">Export Data</h6>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('export_votes_excel') }}" class="btn btn-success btn-sm">
+                                    <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+                                </a>
+                                <a href="{{ url_for('export_votes_csv') }}" class="btn btn-info btn-sm">
+                                    <i class="bi bi-file-earmark-text me-1"></i> Export CSV
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="bg-white-50 my-3">
+                    
+                    <!-- User Profile -->
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar me-2">
+                                {{ session.admin_name[0] }}
+                            </div>
+                            <div>
+                                <strong>{{ session.admin_name }}</strong>
+                                <small class="d-block text-white-50">Administrator</small>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark shadow">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i>Sign out
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content px-4 py-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="fw-bold text-dark mb-1">Search Voters</h2>
+                        <p class="text-muted mb-0">Find voters by name, email, or EQIC ID</p>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{{ url_for('admin_voters') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-people me-2"></i> View All Voters
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                <i class="bi bi-{% if category == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Search Form -->
+                <div class="search-card mb-4">
+                    <form method="GET" action="{{ url_for('search_voters') }}">
+                        <div class="input-group input-group-lg">
+                            <input type="text" class="form-control search-input" 
+                                   name="q" value="{{ query }}" 
+                                   placeholder="Search by name, email, or EQIC ID..." 
+                                   aria-label="Search voters">
+                            <button class="btn btn-primary search-btn" type="submit">
+                                <i class="bi bi-search me-2"></i> Search
+                            </button>
+                        </div>
+                        <div class="form-text mt-3 text-center">
+                            <i class="bi bi-lightbulb me-1"></i> 
+                            You can search by voter name, email address, or EQIC ID
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Search Results -->
+                {% if query %}
+                <div class="card">
+                    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Search Results</h5>
+                        <span class="badge bg-primary">{{ voters|length }} result(s) found</span>
+                    </div>
+                    <div class="card-body">
+                        {% if voters %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Voter</th>
+                                            <th>EQIC ID</th>
+                                            <th>Contact</th>
+                                            <th>Age</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for voter in voters %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="user-avatar me-3">
+                                                            {{ voter.name[0] }}
+                                                        </div>
+                                                        <div>
+                                                            <strong>
+                                                                {% if query.lower() in voter.name.lower() %}
+                                                                    {{ voter.name.replace(query, '<span class="search-highlight">' + query + '</span>')|safe }}
+                                                                {% else %}
+                                                                    {{ voter.name }}
+                                                                {% endif %}
+                                                            </strong>
+                                                            <small class="d-block text-muted">
+                                                                {% if query.lower() in voter.email.lower() %}
+                                                                    {{ voter.email.replace(query, '<span class="search-highlight">' + query + '</span>')|safe }}
+                                                                {% else %}
+                                                                    {{ voter.email }}
+                                                                {% endif %}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <code>
+                                                        {% if query.upper() in voter.eqic_id %}
+                                                            {{ voter.eqic_id.replace(query, '<span class="search-highlight">' + query + '</span>')|safe }}
+                                                        {% else %}
+                                                            {{ voter.eqic_id }}
+                                                        {% endif %}
+                                                    </code>
+                                                </td>
+                                                <td>{{ voter.phone }}</td>
+                                                <td>{{ voter.age }}</td>
+                                                <td>
+                                                    {% if voter.is_verified %}
+                                                        <span class="badge bg-success">Verified</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">Pending</span>
+                                                    {% endif %}
+                                                    {% if voter.has_voted %}
+                                                        <span class="badge bg-info ms-1">Voted</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex">
+                                                        <a href="{{ url_for('voter_details', voter_id=voter.id) }}" 
+                                                           class="action-btn btn btn-info btn-sm" title="View Details">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        {% if not voter.is_verified %}
+                                                            <a href="{{ url_for('verify_voter', voter_id=voter.id) }}" 
+                                                               class="action-btn btn btn-success btn-sm" title="Verify Voter">
+                                                                <i class="bi bi-check-lg"></i>
+                                                            </a>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-search"></i>
+                                <h4>No voters found</h4>
+                                <p>No voters match your search for "<strong>{{ query }}</strong>". Try different search terms.</p>
+                                <a href="{{ url_for('search_voters') }}" class="btn btn-primary mt-2">
+                                    <i class="bi bi-arrow-clockwise me-2"></i> Try Again
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <!-- Search Instructions -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <h4>Search Voters</h4>
+                            <p>Enter a name, email address, or EQIC ID in the search box above to find voters.</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-4 mb-3">
+                                    <div class="feature-card">
+                                        <div class="feature-icon">
+                                            <i class="bi bi-person-badge"></i>
+                                        </div>
+                                        <h5>Search by Name</h5>
+                                        <p class="text-muted">Find voters by their full name or partial name</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="feature-card">
+                                        <div class="feature-icon">
+                                            <i class="bi bi-envelope"></i>
+                                        </div>
+                                        <h5>Search by Email</h5>
+                                        <p class="text-muted">Find voters by email address or domain</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="feature-card">
+                                        <div class="feature-icon">
+                                            <i class="bi bi-key"></i>
+                                        </div>
+                                        <h5>Search by EQIC ID</h5>
+                                        <p class="text-muted">Find voters by their unique identification code</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Quick Search Suggestions -->
+                {% if voters and query %}
+                <div class="mt-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">Quick Search Suggestions</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if voters %}
+                                    {% set voter = voters[0] %}
+                                    <a href="{{ url_for('search_voters', q=voter.name.split(' ')[0]) }}" class="btn btn-sm btn-outline-secondary">
+                                        Search: {{ voter.name.split(' ')[0] }}
+                                    </a>
+                                    {% if voter.name.split(' ')|length > 1 %}
+                                        <a href="{{ url_for('search_voters', q=voter.name.split(' ')[-1]) }}" class="btn btn-sm btn-outline-secondary">
+                                            Search: {{ voter.name.split(' ')[-1] }}
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('search_voters', q=voter.email.split('@')[0]) }}" class="btn btn-sm btn-outline-secondary">
+                                        Search: {{ voter.email.split('@')[0] }}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Focus on search input when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('input[name="q"]');
+            if (searchInput) {
+                searchInput.focus();
+                // Move cursor to end of input
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+            }
+
+            // Add search animation
+            const searchForm = document.querySelector('form');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function() {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.innerHTML = '<i class="bi bi-search me-2"></i> Searching...';
+                        submitBtn.disabled = true;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

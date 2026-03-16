@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Authentication - Smart Voting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .auth-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .webcam-container {
+            margin-bottom: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+        }
+        #video {
+            width: 100%;
+            border-radius: 5px;
+            max-height: 300px;
+        }
+        #capture-btn {
+            margin-top: 10px;
+        }
+        #face-preview {
+            width: 100%;
+            max-width: 300px;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 5px;
+            display: none;
+            margin: 0 auto;
+        }
+        .progress {
+            height: 20px;
+            margin-bottom: 20px;
+        }
+        #result-alert {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="auth-container">
+            <div class="header">
+                <h2>Face Authentication</h2>
+                <p class="text-muted">Verify your identity using facial recognition</p>
+            </div>
+
+            <div id="result-alert" class="alert alert-dismissible fade show" role="alert">
+                <span id="alert-message"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <form id="auth-form">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="webcam-container">
+                            <div id="webcam-wrapper">
+                                <video id="video" autoplay playsinline></video>
+                                <canvas id="canvas" style="display: none;"></canvas>
+                                <img id="face-preview" alt="Captured Face">
+                            </div>
+                            <button type="button" id="capture-btn" class="btn btn-secondary mt-2">Capture Face</button>
+                            <button type="button" id="retake-btn" class="btn btn-outline-secondary mt-2" style="display: none;">Retake Photo</button>
+                            <input type="hidden" id="face-data" name="face_data">
+                            <p class="quality-warning mt-2">Make sure your face is clearly visible in good lighting</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="eqic_id" class="form-label">EQIC ID *</label>
+                            <input type="text" class="form-control" id="eqic_id" name="eqic_id" required placeholder="Enter your EQIC ID">
+                        </div>
+                        
+                        <div class="progress" id="confidence-meter" style="display: none;">
+                            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="auth-btn">
+                                <i class="bi bi-person-check me-1"></i> Authenticate
+                            </button>
+                        </div>
+                        
+                        <div class="mt-3 text-center">
+                            <a href="{{ url_for('index') }}" class="btn btn-link">Back to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Webcam access and face capture
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('capture-btn');
+        const retakeBtn = document.getElementById('retake-btn');
+        const facePreview = document.getElementById('face-preview');
+        const faceData = document.getElementById('face-data');
+        const authBtn = document.getElementById('auth-btn');
+        const authForm = document.getElementById('auth-form');
+        const confidenceMeter = document.getElementById('confidence-meter');
+        const progressBar = document.querySelector('.progress-bar');
+        const resultAlert = document.getElementById('result-alert');
+        const alertMessage = document.getElementById('alert-message');
+
+        let stream = null;
+
+        // Function to show alert
+        function showAlert(message, type) {
+            alertMessage.textContent = message;
+            resultAlert.className = `alert alert-${type} alert-dismissible fade show`;
+            resultAlert.style.display = 'block';
+        }
+
+        // Function to start webcam
+        async function startWebcam() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user' // Use front camera
+                    } 
+                });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing webcam:', error);
+                showAlert('Unable to access webcam. Please check permissions.', 'danger');
+            }
+        }
+
+        // Function to stop webcam
+        function stopWebcam() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        // Capture face image with optimized size
+        captureBtn.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            
+            // Set canvas size to a reasonable resolution for face recognition
+            canvas.width = 320;
+            canvas.height = 240;
+            
+            // Draw the video frame to canvas (scaled down)
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to data URL with medium quality JPEG to reduce size
+            const imageData = canvas.toDataURL('image/jpeg', 0.7);
+            facePreview.src = imageData;
+            facePreview.style.display = 'block';
+            faceData.value = imageData;
+            video.style.display = 'none';
+            captureBtn.style.display = 'none';
+            retakeBtn.style.display = 'inline-block';
+            
+            // Stop the webcam to release resources
+            stopWebcam();
+        });
+
+        // Retake photo
+        retakeBtn.addEventListener('click', () => {
+            video.style.display = 'block';
+            facePreview.style.display = 'none';
+            captureBtn.style.display = 'inline-block';
+            retakeBtn.style.display = 'none';
+            faceData.value = '';
+            startWebcam();
+        });
+
+        // Form submission
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const eqicId = document.getElementById('eqic_id').value.trim();
+            
+            if (!eqicId) {
+                showAlert('Please enter your EQIC ID.', 'warning');
+                return;
+            }
+            
+            if (!faceData.value) {
+                showAlert('Please capture your face image.', 'warning');
+                return;
+            }
+            
+            // Disable submit button to prevent double submission
+            authBtn.disabled = true;
+            authBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Authenticating...';
+            
+            try {
+                const formData = new FormData(authForm);
+                
+                const response = await fetch('/authenticate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    confidenceMeter.style.display = 'block';
+                    progressBar.style.width = `${data.confidence * 100}%`;
+                    progressBar.textContent = `${Math.round(data.confidence * 100)}%`;
+                    progressBar.classList.add('bg-success');
+                    
+                    // Redirect to success page after a delay
+                    setTimeout(() => {
+                        window.location.href = '/authentication_success';
+                    }, 2000);
+                } else {
+                    showAlert(data.message, 'danger');
+                    if (data.confidence) {
+                        confidenceMeter.style.display = 'block';
+                        progressBar.style.width = `${data.confidence * 100}%`;
+                        progressBar.textContent = `${Math.round(data.confidence * 100)}%`;
+                        progressBar.classList.add('bg-warning');
+                    }
+                    authBtn.disabled = false;
+                    authBtn.innerHTML = '<i class="bi bi-person-check me-1"></i> Authenticate';
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                showAlert('Authentication failed. Please try again.', 'danger');
+                authBtn.disabled = false;
+                authBtn.innerHTML = '<i class="bi bi-person-check me-1"></i> Authenticate';
+            }
+        });
+
+        // Initialize webcam when page loads
+        window.addEventListener('load', startWebcam);
+        
+        // Clean up when leaving page
+        window.addEventListener('beforeunload', stopWebcam);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
