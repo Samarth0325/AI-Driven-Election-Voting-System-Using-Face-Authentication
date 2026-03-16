@@ -1,0 +1,2 @@
+# AI-Driven-Election-Voting-System-Using-Face-Authentication
+This project is an AI-powered secure voting system that uses facial recognition technology to authenticate voters and ensure a transparent and fraud-free election process. The system eliminates the need for traditional ID verification by automatically verifying a voter’s identity through facial recognition before allowing them to cast a vote.
